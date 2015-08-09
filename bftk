@@ -1,0 +1,161 @@
+#!/usr/bin/perl
+
+#Copyright (c) 2015 Hullu2000
+
+#Permission is hereby granted, free of charge, to any person obtaining
+#a copy of this software and associated documentation files (the
+#"Software"), to deal in the Software without restriction, including
+#without limitation the rights to use, copy, modify, merge, publish,
+#distribute, sublicense, and/or sell copies of the Software, and to
+#permit persons to whom the Software is furnished to do so, subject to
+#the following conditions:
+
+#The above copyright notice and this permission notice shall be included
+#in all copies or substantial portions of the Software.
+
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+#EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+#MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+#IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+#CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+#TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+#SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*/
+
+my $code = "extern kernel_main
+extern terminal_putchar
+extern set_addr
+
+;multiboot header constants
+MBALIGN     equ  1<<0                   ;align loaded modules on page boundaries
+MEMINFO     equ  1<<1                   ;provide memory map
+FLAGS       equ  MBALIGN | MEMINFO      ;multiboot 'flag' field
+MAGIC       equ  0x1BADB002             ;magic number
+CHECKSUM    equ -(MAGIC + FLAGS)        ;checksum
+
+;Declare a header as in the Multiboot Standard
+section .multiboot
+align 4
+	dd MAGIC
+	dd FLAGS
+	dd CHECKSUM
+
+;stack pointer
+section .bootstrap_stack;, nobits
+align 4
+stack_bottom:
+times 16384 db 0
+stack_top:
+
+;start
+section .text
+global _start
+_start:
+	;stack setup
+	cli
+	mov esp, stack_top
+
+	call kernel_main
+	cli
+
+    mov ebx, 0x00007E00 ;0x00100000\n";
+
+$/ = \1;
+
+my ($buf, $data, $n, $nl, $loop, @loops);
+
+$nl = 0;
+$loop = 0;
+
+open my $fh, "<:encoding(UTF-8)", $ARGV[0] or die "$!\n";
+
+while (read $fh, $data, 1)
+{
+  LS:
+  if($data eq ">")
+  {
+    my $count = 0;
+    while ($data eq ">")
+    {
+      read $fh, $data, 1;
+      $count++;
+    }
+    $buf .= "add EBX, $count\n";
+    goto LS;
+  }
+  elsif($data eq "<")
+  {
+    my $count = 0;
+    while ($data eq "<")
+    {
+      read $fh, $data, 1;
+      $count++;
+    }
+    $buf .= "sub EBX, $count\n";
+    goto LS;
+  }
+  elsif($data eq "+")
+  {
+    my $count = 0;
+    while ($data eq "+")
+    {
+      read $fh, $data, 1;
+      $count++;
+    }
+    $buf .= "add byte[EBX], $count\n";
+    goto LS;
+  }
+  elsif($data eq "-")
+  {
+    my $count = 0;
+    while ($data eq "-")
+    {
+      read $fh, $data, 1;
+      $count++;
+    }
+    $buf .= "sub byte[EBX], $count\n";
+    goto LS;
+  }
+  elsif($data eq ".")
+  {
+    $buf .= "push	ebp\nmov 	ebp, esp\nmov     eax, [ebx]\npush	eax\ncall	terminal_putchar\npop 	ebp\n";
+  }
+  elsif($data eq ",")
+  {
+    $buf .= "push	ebp\nmov 	ebp, esp\npush	ebx\ncall	set_addr\npop 	ebp\nsti\nhlt\nhlt\ncli\n"
+  }
+  elsif($data eq "[")
+  {
+    $loops[$nl] = $loop;
+    $buf .= "cmp byte[EBX], 0\nje b_$loops[$nl]\na_$loops[$nl]:\n";
+    $nl++;
+    $loop++;
+  }
+  elsif($data eq "]")
+  {
+    $nl--;
+    $buf .= "cmp byte[EBX], 0\njne a_$loops[$nl]\nb_$loops[$nl]:\n";
+  }
+}
+
+close $fh;
+
+$code .= $buf;
+$code .= ".hang:
+    hlt
+	jmp .hang";
+
+system("mkdir .out-tmp");
+open my $fh, ">:encoding(UTF-8)", ".out-tmp/boot.asm" or die "$!\n";
+print $fh $code;
+
+my $out = "./.out-tmp/";
+my $path = "/usr/share/BFTK/";
+
+system("nasm -felf32 ${out}boot.asm -o ${out}boot.o");
+system("nasm -felf32 ${path}io.asm -o ${out}io.o");
+system("i686-elf-gcc -c ${path}kernel.c -o ${out}kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
+system("i686-elf-gcc -c ${path}keys.c -o ${out}keys.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
+system("i686-elf-gcc -c ${path}vga.c -o ${out}vga.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
+
+system("i686-elf-gcc -T ${path}link.ld -o bfos.bin -ffreestanding -O2 -nostdlib ${out}boot.o ${out}io.o ${out}keys.o ${out}kernel.o ${out}vga.o -lgcc");
+system("rm -r $out");
