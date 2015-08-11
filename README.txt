@@ -1,4 +1,4 @@
-BFTK (BrainFuck To Kernel) version 1.0
+BFTK (BrainFuck To Kernel) version 1.1
 
 BFTK is a Perl script that turns Brainfuck into assembly and
 links it with a few C files to create a working kernel that
@@ -17,14 +17,33 @@ a tutorial if you didn't want it to be used.
 INSTALLATION
 
 BFTK doesn't need to be compiled since it's just a script.
-It ca be installed with the "make install" command and
+It can be installed with the "make install" command and
 uninstalled with the "make uninstall" command.
 
 USSAGE
 
-bftk /path/to/brainfuc/program
+bftk /path/to/brainfuck/program [BG colour] [FG colour]
 
 This will produce a file called bfos.bin. This is a kernel
 that can be booted on any i686 (Pentium Pro) or newer system.
 Boot loader not included. Use GRUB. You can also boot it in
 Qemu with the command "qemu-system-x86_68 -kernel bfos.bin"
+
+To input colours use numbers:
+
+BLACK = 0
+BLUE = 1
+GREEN = 2
+CYAN = 3
+RED = 4
+MAGENTA = 5
+BROWN = 6
+LIGHT_GREY = 7
+DARK_GREY = 8
+LIGHT_BLUE = 9
+LIGHT_GREEN = 10
+LIGHT_CYAN = 11
+LIGHT_RED = 12
+LIGHT_MAGENTA = 13
+LIGHT_BROWN = 14
+WHITE = 15
