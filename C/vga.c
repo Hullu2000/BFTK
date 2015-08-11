@@ -30,11 +30,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*/
 
 #include "vga.h"
 
-uint8_t make_color(enum vga_color fg, enum vga_color bg)
-{
-	return fg | bg << 4;
-}
-
 uint16_t make_vgaentry(char c, uint8_t color)
 {
 	uint16_t c16 = c;
@@ -62,7 +57,7 @@ void terminal_initialize()
 {
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_color = make_color(COLOR_GREEN, COLOR_BLACK);
+	terminal_color = FG | BG << 4;
 	terminal_buffer = (uint16_t*) 0xB8000;
 	for ( size_t y = 0; y < VGA_HEIGHT; y++ )
 	{

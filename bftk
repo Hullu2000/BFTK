@@ -154,27 +154,29 @@ print $fh $code;
 my $out = "./.out-tmp/";
 my $path = "/usr/share/BFTK/";
 
+my $bgc;
+my $fgc;
+
+if(defined $ARGV[1]) {$bgc = $ARGV[1];} else {$bgc = 0;}
+if(defined $ARGV[2]) {$fgc = $ARGV[2];} else {$fgc = 2;}
+
+my $kbd;
+if($kb) {$kbd = "-D KB";}
+
 system("nasm -felf32 ${out}boot.asm -o ${out}boot.o");
-if($kb)
-{
-  system("nasm -felf32 ${path}io.asm -o ${out}io.o -D KB");
-  system("i686-elf-gcc -c ${path}kernel.c -o ${out}kernel.o -DKB -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
-  system("i686-elf-gcc -c ${path}keys.c -o ${out}keys.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
-}
-else
-{
-  system("nasm -felf32 ${path}io.asm -o ${out}io.o");
-  system("i686-elf-gcc -c ${path}kernel.c -o ${out}kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
-}
-system("i686-elf-gcc -c ${path}vga.c -o ${out}vga.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
+system("nasm -felf32 ${path}io.asm -o ${out}io.o $kbd");
+system("i686-elf-gcc -c ${path}kernel.c -o ${out}kernel.o -std=gnu99 -ffreestanding -O2 $kbd");
+if ($kb) {system("i686-elf-gcc -c ${path}keys.c -o ${out}keys.o -std=gnu99 -ffreestanding -O2");}
+system("i686-elf-gcc -c ${path}vga.c -o ${out}vga.o -DBG=${bgc} -DFG=${fgc} -std=gnu99 -ffreestanding -O2");
 
 if($kb)
 {
+	print("kb");
   system("i686-elf-gcc -T ${path}link.ld -o bfos.bin -ffreestanding -O2 -nostdlib ${out}boot.o ${out}io.o ${out}keys.o ${out}kernel.o ${out}vga.o -lgcc");
 }
 else
 {
+	print("nkb");
   system("i686-elf-gcc -T ${path}link.ld -o bfos.bin -ffreestanding -O2 -nostdlib ${out}boot.o ${out}io.o ${out}kernel.o ${out}vga.o -lgcc");
 }
-
 system("rm -r $out");

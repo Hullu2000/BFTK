@@ -1,4 +1,4 @@
-main:
+ri: uninstall install
 
 install:
 	mkdir /usr/share/BFTK
@@ -8,3 +8,7 @@ install:
 uninstall:
 	rm -r /usr/share/BFTK
 	rm /usr/bin/bftk
+
+get:
+	cp /usr/share/BFTK/* ./C
+	cp /usr/bin/bftk .

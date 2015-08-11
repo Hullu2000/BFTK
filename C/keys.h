@@ -25,9 +25,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*/
 void idt_init(void);
 void kb_init(void);
 
-extern unsigned int kk[];
 extern unsigned char keyboard_map[128];
-
-#define KKL 10
 
 #endif // _KEYS_H
