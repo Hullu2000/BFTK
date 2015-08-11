@@ -68,6 +68,8 @@ $loop = 0;
 
 open my $fh, "<:encoding(UTF-8)", $ARGV[0] or die "$!\n";
 
+my $kb = 0;
+
 while (read $fh, $data, 1)
 {
   LS:
@@ -121,6 +123,7 @@ while (read $fh, $data, 1)
   }
   elsif($data eq ",")
   {
+    $kb = 1;
     $buf .= "push	ebp\nmov 	ebp, esp\npush	ebx\ncall	set_addr\npop 	ebp\nsti\nhlt\nhlt\ncli\n"
   }
   elsif($data eq "[")
@@ -152,10 +155,26 @@ my $out = "./.out-tmp/";
 my $path = "/usr/share/BFTK/";
 
 system("nasm -felf32 ${out}boot.asm -o ${out}boot.o");
-system("nasm -felf32 ${path}io.asm -o ${out}io.o");
-system("i686-elf-gcc -c ${path}kernel.c -o ${out}kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
-system("i686-elf-gcc -c ${path}keys.c -o ${out}keys.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
+if($kb)
+{
+  system("nasm -felf32 ${path}io.asm -o ${out}io.o -D KB");
+  system("i686-elf-gcc -c ${path}kernel.c -o ${out}kernel.o -DKB -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
+  system("i686-elf-gcc -c ${path}keys.c -o ${out}keys.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
+}
+else
+{
+  system("nasm -felf32 ${path}io.asm -o ${out}io.o");
+  system("i686-elf-gcc -c ${path}kernel.c -o ${out}kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
+}
 system("i686-elf-gcc -c ${path}vga.c -o ${out}vga.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra");
 
-system("i686-elf-gcc -T ${path}link.ld -o bfos.bin -ffreestanding -O2 -nostdlib ${out}boot.o ${out}io.o ${out}keys.o ${out}kernel.o ${out}vga.o -lgcc");
+if($kb)
+{
+  system("i686-elf-gcc -T ${path}link.ld -o bfos.bin -ffreestanding -O2 -nostdlib ${out}boot.o ${out}io.o ${out}keys.o ${out}kernel.o ${out}vga.o -lgcc");
+}
+else
+{
+  system("i686-elf-gcc -T ${path}link.ld -o bfos.bin -ffreestanding -O2 -nostdlib ${out}boot.o ${out}io.o ${out}kernel.o ${out}vga.o -lgcc");
+}
+
 system("rm -r $out");

@@ -38,6 +38,8 @@ extern "C"
 void kernel_main()
 {
 	terminal_initialize();
+    #ifdef KB
 	idt_init();
 	kb_init();
+	#endif // KB
 }

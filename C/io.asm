@@ -47,6 +47,8 @@ load_idt:
 	ret
 
 keyboard_handler:
+	%ifdef KB
 	call    keyboard_handler_main
+	%endif
 	iretd
 
