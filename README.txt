@@ -20,7 +20,7 @@ BFTK doesn't need to be compiled since it's just a script.
 It can be installed with the "make install" command and
 uninstalled with the "make uninstall" command.
 
-USSAGE
+USAGE
 
 bftk /path/to/brainfuck/program [BG colour] [FG colour]
 
