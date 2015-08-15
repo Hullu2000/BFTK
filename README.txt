@@ -6,6 +6,9 @@ can be booted with GRUB or Qemu. Currently BFTK requires
 Perl to run and i686-elf-gcc and Nasm to work. You should be
 able to find them in the package repository of your distro.
 
+If you don't want to or can't install i686-elf-gcc you can
+use the m32 branch instead.
+
 BFTK is free software released under the MIT license.
 The C files are based on a few tutorials online. Mainly in
 osdev.org. If I have used some of your code there that you
